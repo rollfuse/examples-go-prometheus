@@ -1,0 +1,20 @@
+schema: spec-driven
+
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+context: |
+  Tech stack: Go (standard library HTTP + github.com/prometheus/client_golang),
+  Docker Compose (Prometheus + Grafana), no framework.
+
+  Domain: a runnable example repository under the rollfuse GitHub
+  organization — not the rollfuse platform itself. It demonstrates
+  github.com/rollfuse/go-sdk instrumented with Prometheus via a small
+  synthetic checkout service (cmd/checkout) plus a self-contained mock of
+  the rollfuse platform API (cmd/mock-rollfuse-api), so the whole thing
+  runs with `docker compose up` and no rollfuse account.
+
+  This repo has no behavioral contract of its own worth a formal
+  openspec/specs/ capability — it's a demo, kept intentionally small.
+  OpenSpec here is for planning nontrivial changes to the demo itself
+  (e.g. adding a new metric, a new instrumentation pattern), not for
+  specifying product behavior.

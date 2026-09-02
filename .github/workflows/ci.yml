@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build, vet
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+
+      - run: go build ./...
+      - run: go vet ./...
+
+  compose-smoke-test:
+    name: docker compose up smoke test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: docker compose up
+        run: docker compose up --build -d mock-rollfuse-api checkout prometheus
+
+      - name: wait for checkout to be ready
+        run: |
+          for i in $(seq 1 30); do
+            curl -fsS http://localhost:8080/healthz && exit 0
+            sleep 1
+          done
+          echo "checkout never became ready" >&2
+          exit 1
+
+      - name: exercise /checkout and check its metrics
+        run: |
+          curl -fsS "http://localhost:8080/checkout?user=ci-smoke-test" | tee /dev/stderr | grep -q '"variation_key"'
+          curl -fsS http://localhost:8080/metrics | grep -q '^rollfuse_flag_evaluations_total'
+
+      - name: check Prometheus scraped the checkout target
+        run: |
+          for i in $(seq 1 15); do
+            health="$(curl -fsS 'http://localhost:9090/api/v1/targets' | grep -o '"health":"up"' || true)"
+            [ -n "$health" ] && exit 0
+            sleep 2
+          done
+          echo "prometheus never reported the checkout target healthy" >&2
+          exit 1
+
+      - name: docker compose logs (always, for debugging)
+        if: always()
+        run: docker compose logs

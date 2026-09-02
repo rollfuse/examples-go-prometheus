@@ -1,0 +1,74 @@
+{
+  "title": "rollfuse checkout example",
+  "uid": "rollfuse-checkout",
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "time": { "from": "now-15m", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Flag evaluations / sec, by variation",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "Prometheus" },
+          "expr": "sum by (variation_key) (rate(rollfuse_flag_evaluations_total{flag_key=\"checkout-redesign\"}[1m]))",
+          "legendFormat": "{{variation_key}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] }
+    },
+    {
+      "id": 2,
+      "title": "Checkout requests / sec, by variation and outcome",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "Prometheus" },
+          "expr": "sum by (variation_key, outcome) (rate(checkout_requests_total[1m]))",
+          "legendFormat": "{{variation_key}} / {{outcome}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] }
+    },
+    {
+      "id": 3,
+      "title": "Checkout duration p95, by variation",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "Prometheus" },
+          "expr": "histogram_quantile(0.95, sum by (le, variation_key) (rate(checkout_request_duration_seconds_bucket[1m])))",
+          "legendFormat": "{{variation_key}} p95",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] }
+    },
+    {
+      "id": 4,
+      "title": "Rollout split (share of evaluations, last 5m)",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "Prometheus" },
+          "expr": "sum by (variation_key) (increase(rollfuse_flag_evaluations_total{flag_key=\"checkout-redesign\"}[5m]))",
+          "legendFormat": "{{variation_key}}",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}

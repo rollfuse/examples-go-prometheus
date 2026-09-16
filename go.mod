@@ -4,7 +4,7 @@ go 1.26.6
 
 require (
 	github.com/prometheus/client_golang v1.20.5
-	github.com/rollfuse/go-sdk v0.1.0
+	github.com/rollfuse/go-sdk v0.1.1
 )
 
 require (
